@@ -74,7 +74,6 @@ class AIClient(object):
         join_tables_rep = self._receive()
         if join_tables_rep.success:
             self._currentTableId = best_table.id_table
-        table_status = self._receive()
 
         # Sit table
         self._send(proto.game.PlayerSitInCommand(best_table.id_table, 1, best_table.params.lobby.starting_amount).encode())
@@ -94,17 +93,12 @@ class AIClient(object):
 
     def play(self):
         bot = None
-        table_status = None
-        cards = []
         while True:
             rep = self._receive()
             print("##########{:^31}##########".format(rep.command_name))
 
-            if rep.command_name == "TableInfoCommand":
-                table_status = rep
-
-            elif rep.command_name == "GameStartedCommand":
-                curr_money = table_status.seats[self._currentSeatId].player.money_safe_amount
+            if rep.command_name == "GameStartedCommand":
+                curr_money = rep.seats[self._currentSeatId].player.money_safe_amount
                 if curr_money == 0:
                     print("# No more money! I lost ...")
                     return
@@ -122,7 +116,7 @@ class AIClient(object):
 
             elif rep.command_name == "PlayerHoleCardsChangedCommand":
                 if rep.no_seat == self._currentSeatId:
-                    bot.set_hand(rep.cards)
+                    bot.set_hand(rep.face_down_cards)
 
             elif rep.command_name == "PlayerTurnBeganCommand":
                 if rep.no_seat == self._currentSeatId:
